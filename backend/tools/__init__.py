@@ -1,19 +1,15 @@
-from backend.tools.discovery_tools import (
-    DISCOVERY_TOOLS,
-    check_inventory,
-    get_product_details,
-    search_products,
-)
-from backend.tools.cart_tools import (
-    CART_TOOLS,
+from backend.tools.shopping_tools import (
+    ALL_SHOPPING_TOOLS,
+    SHOPPING_TOOLS,
     add_to_cart,
+    check_inventory,
     clear_cart,
     get_cart,
+    get_product_details,
     remove_from_cart,
+    search_products,
     update_cart_item,
 )
-
-ALL_SHOPPING_TOOLS = DISCOVERY_TOOLS + CART_TOOLS
 
 __all__ = [
     "search_products",
@@ -24,8 +20,6 @@ __all__ = [
     "update_cart_item",
     "clear_cart",
     "get_cart",
-    "DISCOVERY_TOOLS",
-    "CART_TOOLS",
+    "SHOPPING_TOOLS",
     "ALL_SHOPPING_TOOLS",
 ]
-

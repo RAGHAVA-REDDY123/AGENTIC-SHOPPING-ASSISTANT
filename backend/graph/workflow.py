@@ -1,148 +1,69 @@
-
-from typing import Literal, Optional
-
-from langgraph.graph import StateGraph, START, END
-from langgraph.prebuilt import ToolNode, tools_condition
+from typing import Any, Dict, Literal, Optional
+from langchain_core.messages import AIMessage
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.prebuilt import ToolNode, tools_condition
 
-from backend.agents.supervisor import supervisor_node
-from backend.agents.discovery_agent import discovery_agent_node
-from backend.agents.comparison_agent import comparison_agent_node
-from backend.agents.cart_agent import cart_agent_node
-
+from backend.agents.shopping_agent import shopping_agent_node
 from backend.graph.state import AgentState
-
-from backend.tools.discovery_tools import DISCOVERY_TOOLS
-from backend.tools.cart_tools import CART_TOOLS
-
-
-def route_supervisor(
-    state: AgentState,
-) -> Literal[
-    "discovery_agent",
-    "comparison_agent",
-    "cart_agent",
-    "__end__",
-]:
-    next_node = state.get("next", "FINISH")
-
-    if next_node in (
-        "discovery_agent",
-        "comparison_agent",
-        "cart_agent",
-    ):
-        return next_node
-
-    return END
+from backend.services.comparison_service import comparison_pipeline, is_comparison_query
+from backend.tools.shopping_tools import ALL_SHOPPING_TOOLS
 
 
-def route_after_discovery(
-    state: AgentState,
-) -> Literal["comparison_agent", "cart_agent", "__end__"]:
+def route_query_intent(state: AgentState) -> Literal["comparison_pipeline", "shopping_agent"]:
+    messages = state.get("messages", [])
+    if not messages:
+        return "shopping_agent"
 
-    next_node = state.get("next", "FINISH")
+    human_messages = [m for m in messages if getattr(m, "type", "") in ("human", "user")]
+    target_msg = human_messages[-1] if human_messages else messages[-1]
+    query = str(getattr(target_msg, "content", ""))
 
-    if next_node in ("comparison_agent", "cart_agent"):
-        return next_node
+    if is_comparison_query(query):
+        return "comparison_pipeline"
 
-    return END
-
-
-def route_after_comparison(
-    state: AgentState,
-) -> Literal["cart_agent", "__end__"]:
-
-    next_node = state.get("next", "FINISH")
-
-    if next_node == "cart_agent":
-        return "cart_agent"
-
-    return END
+    return "shopping_agent"
 
 
-def build_shopping_graph(
-    checkpointer: Optional[MemorySaver] = None,
-):
+def comparison_pipeline_node(state: AgentState) -> Dict[str, Any]:
+    messages = state.get("messages", [])
+    human_messages = [m for m in messages if getattr(m, "type", "") in ("human", "user")]
+    target_msg = human_messages[-1] if human_messages else messages[-1]
+    query = str(getattr(target_msg, "content", ""))
+
+    result = comparison_pipeline.run(query)
+    return {"messages": [AIMessage(content=result)]}
+
+
+def build_shopping_graph(checkpointer: Optional[MemorySaver] = None):
     workflow = StateGraph(AgentState)
 
-    # Nodes
-    workflow.add_node("supervisor", supervisor_node)
+    workflow.add_node("shopping_agent", shopping_agent_node)
+    workflow.add_node("tools", ToolNode(ALL_SHOPPING_TOOLS))
+    workflow.add_node("comparison_pipeline", comparison_pipeline_node)
 
-    workflow.add_node("discovery_agent", discovery_agent_node)
-    workflow.add_node("discovery_tools", ToolNode(DISCOVERY_TOOLS))
-
-    workflow.add_node("comparison_agent", comparison_agent_node)
-
-    workflow.add_node("cart_agent", cart_agent_node)
-    workflow.add_node("cart_tools", ToolNode(CART_TOOLS))
-
-    # Entry point
-    workflow.add_edge(START, "supervisor")
-
-    # Initial routing
     workflow.add_conditional_edges(
-        "supervisor",
-        route_supervisor,
+        START,
+        route_query_intent,
         {
-            "discovery_agent": "discovery_agent",
-            "comparison_agent": "comparison_agent",
-            "cart_agent": "cart_agent",
-            END: END,
+            "comparison_pipeline": "comparison_pipeline",
+            "shopping_agent": "shopping_agent",
         },
     )
 
-    # Discovery agent -> tools or next specialist
     workflow.add_conditional_edges(
-        "discovery_agent",
+        "shopping_agent",
         tools_condition,
         {
-            "tools": "discovery_tools",
-            END: "discovery_router",
-        },
-    )
-
-    workflow.add_node(
-        "discovery_router",
-        lambda state: {},
-    )
-
-    workflow.add_conditional_edges(
-        "discovery_router",
-        route_after_discovery,
-        {
-            "comparison_agent": "comparison_agent",
-            "cart_agent": "cart_agent",
+            "tools": "tools",
             END: END,
         },
     )
 
-    workflow.add_edge("discovery_tools", "discovery_agent")
+    workflow.add_edge("tools", "shopping_agent")
+    workflow.add_edge("comparison_pipeline", END)
 
-    # Comparison agent -> cart or END
-    workflow.add_conditional_edges(
-        "comparison_agent",
-        route_after_comparison,
-        {
-            "cart_agent": "cart_agent",
-            END: END,
-        },
-    )
-
-    # Cart agent -> tools or END
-    workflow.add_conditional_edges(
-        "cart_agent",
-        tools_condition,
-        {
-            "tools": "cart_tools",
-            END: END,
-        },
-    )
-
-    workflow.add_edge("cart_tools", "cart_agent")
-
-    # Compile
     memory = checkpointer if checkpointer is not None else MemorySaver()
-
     return workflow.compile(checkpointer=memory)
 
 

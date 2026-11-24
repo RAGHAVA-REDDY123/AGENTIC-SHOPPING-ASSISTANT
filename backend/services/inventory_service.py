@@ -60,7 +60,7 @@ class InventoryService:
                 stock_quantity=available_stock,
                 requested_quantity=requested_quantity,
                 status="insufficient_quantity",
-                message=f"Only {available_stock} unit(s) available for '{product.name}', but {requested_quantity} requested.",
+                message=f"Insufficient stock for '{product.name}' to fulfill requested quantity of {requested_quantity}.",
             )
 
         status = "low_stock" if available_stock <= 3 else "in_stock"
@@ -71,7 +71,7 @@ class InventoryService:
             stock_quantity=available_stock,
             requested_quantity=requested_quantity,
             status=status,
-            message=f"'{product.name}' is in stock ({available_stock} available).",
+            message=f"'{product.name}' is in stock to fulfill requested quantity of {requested_quantity}.",
         )
 
     def check_multiple(self, product_ids: List[int]) -> Dict[int, InventoryCheckResult]:
