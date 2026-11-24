@@ -1,13 +1,19 @@
 from backend.tools.shopping_tools import (
     ALL_SHOPPING_TOOLS,
     SHOPPING_TOOLS,
+    add_saved_address,
     add_to_cart,
+    cancel_order,
     check_inventory,
+    checkout_cart,
     clear_cart,
     get_cart,
+    get_order_history,
     get_product_details,
+    get_saved_addresses,
     remove_from_cart,
     search_products,
+    track_order,
     update_cart_item,
 )
 
@@ -20,6 +26,12 @@ __all__ = [
     "update_cart_item",
     "clear_cart",
     "get_cart",
+    "get_saved_addresses",
+    "add_saved_address",
+    "checkout_cart",
+    "track_order",
+    "get_order_history",
+    "cancel_order",
     "SHOPPING_TOOLS",
     "ALL_SHOPPING_TOOLS",
 ]

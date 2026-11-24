@@ -1,4 +1,5 @@
 import os
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
@@ -6,7 +7,11 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-root_env = Path(__file__).resolve().parents[2] / ".env"
+project_root = Path(__file__).resolve().parents[2]
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+root_env = project_root / ".env"
 if root_env.exists():
     load_dotenv(dotenv_path=root_env)
 else:
@@ -43,19 +48,23 @@ def get_db_session() -> Generator[Session, None, None]:
 
 
 def check_db_connection() -> dict:
-    """Test database connectivity and check if pgvector extension is installed."""
+    """Test database connectivity and ensure tables are initialized."""
     try:
         with engine.connect() as conn:
             version = conn.execute(text("SELECT version();")).scalar()
             has_vector = conn.execute(
                 text("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector');")
             ).scalar()
-            return {
-                "status": "connected",
-                "database": engine.url.render_as_string(hide_password=True),
-                "postgres_version": version,
-                "pgvector_installed": bool(has_vector),
-            }
+
+        from backend.database.base import Base
+        Base.metadata.create_all(bind=engine)
+
+        return {
+            "status": "connected",
+            "database": engine.url.render_as_string(hide_password=True),
+            "postgres_version": version,
+            "pgvector_installed": bool(has_vector),
+        }
     except Exception as exc:
         return {
             "status": "failed",
@@ -73,15 +82,10 @@ if __name__ == "__main__":
         print("Database is not connected. Please ensure Docker is running.")
         raise SystemExit(1)
 
-    import sys
-    project_root = Path(__file__).resolve().parent.parent.parent
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-
     from backend.graph.workflow import shopping_workflow
     from langchain_core.messages import HumanMessage
 
-    thread_id = "interactive_session_001"
+    thread_id = "interactive_session_002"
     agent_config = {"configurable": {"thread_id": thread_id}}
 
     print("\n=== AI Shopping Assistant ===")

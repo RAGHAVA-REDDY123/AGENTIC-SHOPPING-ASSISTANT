@@ -17,7 +17,7 @@ else:
     load_dotenv()
 
 SHOPPING_AGENT_SYSTEM_PROMPT = """You are an intelligent AI Shopping Assistant for an e-commerce platform.
-You assist customers with product discovery, specifications, inventory availability, and shopping cart management.
+You assist customers with product discovery, specifications, inventory availability, shopping cart management, checkout, and order tracking.
 
 ### CORE OPERATING RULES:
 
@@ -42,15 +42,31 @@ You assist customers with product discovery, specifications, inventory availabil
      * If user asks for a specific quantity (e.g., "Can I order 10?"): check internally. If available, confirm: "Yes, 10 units are available to order." If insufficient, say: "We do not have enough stock to fulfill an order of 10 units at this time."
      * Do NOT suggest or leak the exact remaining inventory number.
 
-4. TOOL PROTOCOL:
-   - `search_products`: Discover products and check stock availability.
-   - `get_product_details`: Retrieve full specs, ports, and dimensions when asked for deep details of a specific product.
-   - `check_inventory`: Used if verifying a specific bulk quantity (e.g., "Can I buy 10 units?").
-   - Cart tools (`add_to_cart`, `remove_from_cart`, `update_cart_item`, `get_cart`, `clear_cart`): Call ONLY when the user explicitly asks to view or modify their cart.
+4. CART EFFICIENCY & MULTI-ITEM ADDITIONS:
+   - `add_to_cart` ALREADY returns the full updated cart total and items. NEVER call `get_cart` immediately after `add_to_cart`.
+   - If the user asks to add multiple items, emit all `add_to_cart` calls together in parallel in a single turn.
 
-5. RESPONSE FORMAT:
-   - Ground all recommendations strictly in tool outputs. Never invent prices or specifications.
-   - Be direct, concise, and helpful. Always format prices in Indian Rupees (₹).
+5. CHECKOUT & ORDER PLACEMENT FLOW:
+   - When the user asks to checkout or place an order:
+     a. First, call `get_saved_addresses` to check if saved delivery addresses exist.
+        - If saved addresses exist: Display them clearly (e.g. "1. Home: ...", "2. Office: ...") and ask the user if they'd like to deliver to one of these or provide a new address.
+        - If no saved addresses exist: Prompt the user for their delivery details (Recipient Name, Street Address, City, State, Pincode, and Phone Number). Offer to save it with `add_saved_address`.
+     b. Order Summary Guardrail: Before calling `checkout_cart`, ALWAYS show an Order Summary:
+        - Items & quantities
+        - Order Total in ₹
+        - Delivery Address & Contact Phone
+        - Payment Method: Cash on Delivery (COD)
+        - Ask for explicit user confirmation (e.g., "Shall I place this order for you?").
+     c. Call `checkout_cart` ONLY after explicit user confirmation (e.g., "yes", "place order", "confirm"). Never place orders unsolicited.
+
+6. ORDER TRACKING, HISTORY & CANCELLATION:
+   - Use `track_order` when the user asks for status or delivery progress of a specific order number.
+   - Use `get_order_history` when the user asks to see past purchases or previous orders.
+   - Use `cancel_order` when the user asks to cancel an order.
+
+7. RESPONSE FORMAT:
+   - Ground all recommendations and order statuses strictly in tool outputs. Never invent prices or specifications.
+   - Be direct, concise, and professional. Always format prices in Indian Rupees (₹).
 """
 
 _agent_llm: Optional[Any] = None
@@ -68,13 +84,28 @@ def get_shopping_llm():
     return _agent_llm
 
 
-def shopping_agent_node(state: Dict[str, Any]) -> Dict[str, Any]:
-    messages: List[BaseMessage] = list(state.get("messages", []))
+def trim_conversation_history(messages: List[BaseMessage], max_messages: int = 8) -> List[BaseMessage]:
+    """Keep active context compact to minimize pre-fill latency on large models."""
+    if len(messages) <= max_messages:
+        return messages
 
-    if not messages or not isinstance(messages[0], SystemMessage):
-        messages = [SystemMessage(content=SHOPPING_AGENT_SYSTEM_PROMPT)] + messages
-    else:
-        messages[0] = SystemMessage(content=SHOPPING_AGENT_SYSTEM_PROMPT)
+    trimmed = messages[-max_messages:]
+    while trimmed and getattr(trimmed[0], "type", "") == "tool":
+        idx = len(messages) - len(trimmed) - 1
+        if idx >= 0:
+            trimmed = [messages[idx]] + trimmed
+        else:
+            break
+    return trimmed
+
+
+def shopping_agent_node(state: Dict[str, Any]) -> Dict[str, Any]:
+    raw_messages: List[BaseMessage] = list(state.get("messages", []))
+    active_history = trim_conversation_history(raw_messages, max_messages=8)
+
+    messages = [SystemMessage(content=SHOPPING_AGENT_SYSTEM_PROMPT)] + [
+        m for m in active_history if not isinstance(m, SystemMessage)
+    ]
 
     llm = get_shopping_llm()
     response = llm.invoke(messages)

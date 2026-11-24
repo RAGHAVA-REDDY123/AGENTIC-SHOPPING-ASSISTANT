@@ -6,6 +6,7 @@ from langchain_core.tools import tool
 from backend.database.connection import get_db_session
 from backend.services.cart_service import CartService
 from backend.services.inventory_service import InventoryService
+from backend.services.order_service import OrderService
 from backend.services.product_service import ProductService
 
 
@@ -62,27 +63,25 @@ def search_products(
                 if not p.get("in_stock", False) or stock_qty <= 0:
                     stock_status = "out_of_stock"
                 elif stock_qty <= 3:
-                    stock_status = f"low_stock (Only {stock_qty} left)"
+                    stock_status = "low_stock"
                 else:
                     stock_status = "in_stock"
+
+                # Extract top 2 feature highlights to keep payload compact
+                feats = p.get("features", {})
+                highlight = "; ".join(f"{k}: {v}" for k, v in list(feats.items())[:2]) if isinstance(feats, dict) else ""
 
                 formatted.append({
                     "id": p["id"],
                     "name": p["name"],
-                    "slug": p["slug"],
                     "brand": p["brand"],
-                    "category": p["category_slug"],
                     "price": f"₹{p['price']:,.2f}",
-                    "original_price": f"₹{p['original_price']:,.2f}",
-                    "discount": f"{p['discount_percent']}%",
-                    "rating": f"{p['rating']}/5.0 ({p['review_count']} reviews)",
+                    "rating": f"{p['rating']}/5.0",
                     "stock_status": stock_status,
-                    "ranking_score": p["ranking_score"],
-                    "ranking_criteria": p["ranking_criteria"],
-                    "key_features": p["features"],
+                    "highlights": highlight,
                 })
 
-            return json.dumps(formatted, indent=2)
+            return json.dumps(formatted, separators=(",", ":"))
     except Exception as e:
         return f"Database error during product search: {str(e)}"
 
@@ -146,18 +145,30 @@ def check_inventory(product_id: int, quantity: int = 1) -> str:
 
 @tool
 def add_to_cart(product_id: int, quantity: int = 1) -> str:
-    """Add a product to the cart after validating stock availability."""
+    """
+    Add a product to the cart. Returns the updated cart summary immediately.
+    Do NOT call get_cart after calling this tool.
+    """
     try:
         with get_db_session() as db:
             service = CartService(db)
             res = service.add_to_cart(product_id=product_id, quantity=quantity)
-            cart_data = res.cart.model_dump(mode="json") if res.cart else None
+            if not res.success or not res.cart:
+                return json.dumps({"success": False, "message": res.message})
+
+            compact_items = [
+                {"name": it.product_name, "qty": it.quantity, "subtotal": f"₹{float(it.subtotal):,.2f}"}
+                for it in res.cart.items
+            ]
             return json.dumps({
-                "success": res.success,
-                "action": res.action,
+                "success": True,
                 "message": res.message,
-                "cart": cart_data,
-            }, indent=2)
+                "cart": {
+                    "total_items": res.cart.total_items,
+                    "total_price": f"₹{float(res.cart.total_price):,.2f}",
+                    "items": compact_items,
+                },
+            }, separators=(",", ":"))
     except Exception as e:
         return f"Database error adding item to cart: {str(e)}"
 
@@ -207,7 +218,15 @@ def get_cart() -> str:
             cart = service.get_cart()
             if not cart.items:
                 return "Your shopping cart is currently empty."
-            return json.dumps(cart.model_dump(mode="json"), indent=2)
+            compact = {
+                "total_items": cart.total_items,
+                "total_price": f"₹{float(cart.total_price):,.2f}",
+                "items": [
+                    {"name": it.product_name, "quantity": it.quantity, "subtotal": f"₹{float(it.subtotal):,.2f}"}
+                    for it in cart.items
+                ],
+            }
+            return json.dumps(compact, separators=(",", ":"))
     except Exception as e:
         return f"Database error retrieving cart: {str(e)}"
 
@@ -228,6 +247,119 @@ def clear_cart() -> str:
         return f"Database error clearing cart: {str(e)}"
 
 
+@tool
+def get_saved_addresses() -> str:
+    """Retrieve the customer's saved delivery addresses."""
+    try:
+        with get_db_session() as db:
+            service = OrderService(db)
+            addresses = service.get_saved_addresses()
+            if not addresses:
+                return "No saved addresses found. Please provide your delivery address."
+            return json.dumps(addresses, indent=2)
+    except Exception as e:
+        return f"Database error fetching addresses: {str(e)}"
+
+
+@tool
+def add_saved_address(
+    recipient_name: str,
+    phone: str,
+    address_line: str,
+    city: str,
+    state: str,
+    pincode: str,
+    title: str = "Home",
+    is_default: bool = False,
+) -> str:
+    """Save a new delivery address for the customer."""
+    try:
+        with get_db_session() as db:
+            service = OrderService(db)
+            res = service.add_saved_address(
+                recipient_name=recipient_name,
+                phone=phone,
+                address_line=address_line,
+                city=city,
+                state=state,
+                pincode=pincode,
+                title=title,
+                is_default=is_default,
+            )
+            return json.dumps(res, indent=2)
+    except Exception as e:
+        return f"Database error adding address: {str(e)}"
+
+
+@tool
+def checkout_cart(
+    shipping_address: Optional[str] = None,
+    contact_phone: Optional[str] = None,
+    recipient_name: Optional[str] = None,
+    address_id: Optional[int] = None,
+) -> str:
+    """
+    Finalize the shopping cart and place an order using Cash on Delivery (COD).
+    Call this ONLY after the user has reviewed the order summary and explicitly confirmed placing the order.
+    
+    Args:
+        shipping_address: Full delivery address text (if not using address_id).
+        contact_phone: 10-digit contact mobile number (if not using address_id).
+        recipient_name: Optional recipient name.
+        address_id: Optional integer ID of a chosen saved address.
+    """
+    try:
+        with get_db_session() as db:
+            service = OrderService(db)
+            res = service.checkout_cart(
+                shipping_address=shipping_address,
+                contact_phone=contact_phone,
+                recipient_name=recipient_name,
+                address_id=address_id,
+            )
+            return json.dumps(res, indent=2)
+    except Exception as e:
+        return f"Database error placing order: {str(e)}"
+
+
+@tool
+def track_order(order_number: str) -> str:
+    """Track the status and details of an existing order using its order number (e.g. 'ORD-20261124-7A9B')."""
+    try:
+        with get_db_session() as db:
+            service = OrderService(db)
+            res = service.track_order(order_number=order_number)
+            return json.dumps(res, indent=2)
+    except Exception as e:
+        return f"Database error tracking order: {str(e)}"
+
+
+@tool
+def get_order_history() -> str:
+    """Retrieve the customer's previous order history and past purchases."""
+    try:
+        with get_db_session() as db:
+            service = OrderService(db)
+            orders = service.get_order_history()
+            if not orders:
+                return "You have not placed any orders yet."
+            return json.dumps(orders, indent=2)
+    except Exception as e:
+        return f"Database error fetching order history: {str(e)}"
+
+
+@tool
+def cancel_order(order_number: str, reason: str = "") -> str:
+    """Cancel an active order by order number and restore product stock."""
+    try:
+        with get_db_session() as db:
+            service = OrderService(db)
+            res = service.cancel_order(order_number=order_number, reason=reason)
+            return json.dumps(res, indent=2)
+    except Exception as e:
+        return f"Database error cancelling order: {str(e)}"
+
+
 SHOPPING_TOOLS = [
     search_products,
     get_product_details,
@@ -237,6 +369,12 @@ SHOPPING_TOOLS = [
     update_cart_item,
     get_cart,
     clear_cart,
+    get_saved_addresses,
+    add_saved_address,
+    checkout_cart,
+    track_order,
+    get_order_history,
+    cancel_order,
 ]
 
 ALL_SHOPPING_TOOLS = SHOPPING_TOOLS
@@ -250,6 +388,12 @@ __all__ = [
     "update_cart_item",
     "clear_cart",
     "get_cart",
+    "get_saved_addresses",
+    "add_saved_address",
+    "checkout_cart",
+    "track_order",
+    "get_order_history",
+    "cancel_order",
     "SHOPPING_TOOLS",
     "ALL_SHOPPING_TOOLS",
 ]
