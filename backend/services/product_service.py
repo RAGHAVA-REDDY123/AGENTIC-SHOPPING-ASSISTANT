@@ -119,17 +119,21 @@ class ProductService:
             except Exception:
                 query_vector = None
 
-        candidates = self.product_repo.search(
-            query=query,
-            query_vector=query_vector,
-            category_slug=category_slug,
-            brand=brand,
-            min_price=min_price,
-            max_price=max_price,
-            min_rating=min_rating,
-            limit=limit * 2 if apply_ranking else limit,
-            offset=offset,
-        )
+        try:
+            candidates = self.product_repo.search(
+                query=query,
+                query_vector=query_vector,
+                category_slug=category_slug,
+                brand=brand,
+                min_price=min_price,
+                max_price=max_price,
+                min_rating=min_rating,
+                limit=limit * 2 if apply_ranking else limit,
+                offset=offset,
+            )
+        except Exception:
+            # Graceful recovery on database timeout or connection error
+            return []
 
         if not candidates:
             return []

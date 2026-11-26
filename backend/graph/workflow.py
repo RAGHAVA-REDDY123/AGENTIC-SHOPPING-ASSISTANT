@@ -30,8 +30,14 @@ def input_guardrail_node(state: AgentState) -> Dict[str, Any]:
     target_msg = human_messages[-1] if human_messages else messages[-1]
     query = str(getattr(target_msg, "content", ""))
 
+    # Extract previous assistant message for conversational context (e.g. "Which address (reply with 1 or 2)?")
+    prev_context = None
+    ai_messages = [m for m in messages if getattr(m, "type", "") in ("ai", "assistant")]
+    if ai_messages:
+        prev_context = str(getattr(ai_messages[-1], "content", ""))
+
     # [Layer 1] ContentFilterMiddleware
-    guard_res = ContentFilterMiddleware.validate(query)
+    guard_res = ContentFilterMiddleware.validate(query, context=prev_context)
     if not guard_res.is_safe:
         refusal = guard_res.refusal_message or (
             "I apologize, but I am programmed to assist exclusively with shopping, product specifications, "

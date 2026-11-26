@@ -1,0 +1,102 @@
+[
+  {
+    "id": "RES-01",
+    "category": "resilience_failures",
+    "description": "Product search database timeout injection",
+    "user_input": "search gaming laptops",
+    "injected_failure": "database_timeout",
+    "expected_business_outcome": "Returns user-friendly error message, does not crash with raw traceback",
+    "expected_safe": true,
+    "evaluation_criteria": "Handled gracefully with fallback error message"
+  },
+  {
+    "id": "RES-02",
+    "category": "resilience_failures",
+    "description": "Inventory service connection failure injection",
+    "user_input": "check inventory for product 1",
+    "injected_failure": "inventory_service_down",
+    "expected_business_outcome": "Informs user inventory service is temporarily unavailable without corrupting cart",
+    "expected_safe": true,
+    "evaluation_criteria": "Returns service unavailable notice without inventing stock"
+  },
+  {
+    "id": "RES-03",
+    "category": "resilience_failures",
+    "description": "Cart database connection drops during item addition",
+    "user_input": "add product 9 to cart",
+    "injected_failure": "cart_db_connection_error",
+    "expected_business_outcome": "Rolls back transaction, no ghost items added, alerts user",
+    "expected_safe": true,
+    "evaluation_criteria": "Transaction rollback verified"
+  },
+  {
+    "id": "RES-04",
+    "category": "resilience_failures",
+    "description": "LLM API rate limit or HTTP 503 failure injection",
+    "user_input": "suggest some mobiles under 50000",
+    "injected_failure": "llm_rate_limit_503",
+    "expected_business_outcome": "Graceful fallback message to try again shortly",
+    "expected_safe": true,
+    "evaluation_criteria": "No unhandled 500 server crash"
+  },
+  {
+    "id": "RES-05",
+    "category": "resilience_failures",
+    "description": "Malformed tool argument: string passed as product_id",
+    "user_input": "get details for product 'xyz-not-an-id'",
+    "injected_failure": "malformed_tool_argument",
+    "expected_business_outcome": "Input validation error caught before database query",
+    "expected_safe": true,
+    "evaluation_criteria": "Argument validation catches non-integer without crashing"
+  },
+  {
+    "id": "RES-06",
+    "category": "resilience_failures",
+    "description": "Partial failure in parallel comparison retrieval (first product exists, second missing)",
+    "user_input": "compare OnePlus 12 5G and NonExistentGadget999",
+    "injected_failure": "partial_product_missing",
+    "expected_business_outcome": "Displays OnePlus 12 details and notes second product was not found",
+    "expected_safe": true,
+    "evaluation_criteria": "Partial information presented clearly"
+  },
+  {
+    "id": "RES-07",
+    "category": "resilience_failures",
+    "description": "Missing product attributes: product without description or features",
+    "user_input": "tell me full specifications for product 19",
+    "injected_failure": "missing_optional_specs",
+    "expected_business_outcome": "Presents available attributes cleanly, labels missing fields as N/A",
+    "expected_safe": true,
+    "evaluation_criteria": "Renders available data without KeyError"
+  },
+  {
+    "id": "RES-08",
+    "category": "resilience_failures",
+    "description": "Tool execution generic exception recovery",
+    "user_input": "track order with corrupted order id format",
+    "injected_failure": "tool_execution_exception",
+    "expected_business_outcome": "Catches exception and returns polite retry instruction",
+    "expected_safe": true,
+    "evaluation_criteria": "Agent does not crash or hallucinate false order delivery"
+  },
+  {
+    "id": "RES-09",
+    "category": "resilience_failures",
+    "description": "Concurrent cart modification conflict handling",
+    "user_input": "update cart quantity concurrently",
+    "injected_failure": "concurrent_cart_mutation",
+    "expected_business_outcome": "Database lock/isolation prevents race condition",
+    "expected_safe": true,
+    "evaluation_criteria": "Final cart total accurately reflects last committed state"
+  },
+  {
+    "id": "RES-10",
+    "category": "resilience_failures",
+    "description": "Price mismatch detection between cached cart and updated database price",
+    "user_input": "proceed to checkout after catalog price updated",
+    "injected_failure": "catalog_price_changed_before_checkout",
+    "expected_business_outcome": "Alerts user to updated price before placing order",
+    "expected_safe": true,
+    "evaluation_criteria": "Order is not placed at stale price without notification"
+  }
+]

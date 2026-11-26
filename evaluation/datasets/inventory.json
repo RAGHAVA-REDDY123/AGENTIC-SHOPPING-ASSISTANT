@@ -1,0 +1,138 @@
+[
+  {
+    "id": "INV-01",
+    "category": "inventory",
+    "description": "Available product in-stock inquiry for product 1",
+    "user_input": "is product 1 currently in stock?",
+    "expected_intent": "inventory",
+    "expected_tool": "check_inventory",
+    "expected_args": {"product_id": 1},
+    "expected_product_ids": [1],
+    "expected_business_outcome": "Returns in_stock status without exposing raw warehouse numbers",
+    "evaluation_criteria": "Tool is check_inventory and output status is in_stock"
+  },
+  {
+    "id": "INV-02",
+    "category": "inventory",
+    "description": "Stock check before purchase for product 3",
+    "user_input": "check stock availability for product 3",
+    "expected_intent": "inventory",
+    "expected_tool": "check_inventory",
+    "expected_args": {"product_id": 3},
+    "expected_product_ids": [3],
+    "expected_business_outcome": "Returns in_stock for Dell XPS 15",
+    "evaluation_criteria": "Tool is check_inventory with product_id=3"
+  },
+  {
+    "id": "INV-03",
+    "category": "inventory",
+    "description": "Low-stock product inquiry for Samsung Z Fold5 (stock=8)",
+    "user_input": "is product 10 available to buy right now?",
+    "expected_intent": "inventory",
+    "expected_tool": "check_inventory",
+    "expected_args": {"product_id": 10},
+    "expected_product_ids": [10],
+    "expected_business_outcome": "Reports available / low stock politely without exact warehouse number",
+    "evaluation_criteria": "product_id=10 and safe wording"
+  },
+  {
+    "id": "INV-04",
+    "category": "inventory",
+    "description": "Deterministic stock decrement math: stock 25 - purchased 3 = 22",
+    "user_input": "internal stock decrement check",
+    "initial_stock": 25,
+    "purchased_quantity": 3,
+    "expected_remaining_stock": 22,
+    "expected_business_outcome": "Remaining inventory equals 22",
+    "evaluation_criteria": "remaining_stock == 22"
+  },
+  {
+    "id": "INV-05",
+    "category": "inventory",
+    "description": "Insufficient inventory rejection: requested 50 but stock is 8",
+    "user_input": "can I purchase 50 units of product 10?",
+    "initial_stock": 8,
+    "requested_quantity": 50,
+    "expected_intent": "inventory",
+    "expected_business_outcome": "Politely rejects order due to insufficient stock",
+    "evaluation_criteria": "Refusal generated without crashing"
+  },
+  {
+    "id": "INV-06",
+    "category": "inventory",
+    "description": "Zero/negative quantity validation: requested 0 units",
+    "user_input": "order 0 units of product 1",
+    "requested_quantity": 0,
+    "expected_intent": "cart",
+    "expected_business_outcome": "Rejects quantity <= 0 with validation error",
+    "evaluation_criteria": "Does not add 0 quantity to cart"
+  },
+  {
+    "id": "INV-07",
+    "category": "inventory",
+    "description": "Negative quantity validation: requested -5 units",
+    "user_input": "add -5 units of product 2 to cart",
+    "requested_quantity": -5,
+    "expected_intent": "cart",
+    "expected_business_outcome": "Rejects negative quantity",
+    "evaluation_criteria": "Does not allow negative inventory or cart mutation"
+  },
+  {
+    "id": "INV-08",
+    "category": "inventory",
+    "description": "Stock changes after checkout completion",
+    "user_input": "checkout order validation",
+    "initial_stock": 40,
+    "purchased_quantity": 2,
+    "expected_remaining_stock": 38,
+    "expected_business_outcome": "Inventory reduced from 40 to 38 upon order placement",
+    "evaluation_criteria": "remaining_stock == 38"
+  },
+  {
+    "id": "INV-09",
+    "category": "inventory",
+    "description": "Stock inquiry for AirPods Pro (stock=60)",
+    "user_input": "can I buy 5 units of product 13?",
+    "expected_intent": "inventory",
+    "expected_tool": "check_inventory",
+    "expected_args": {"product_id": 13},
+    "expected_product_ids": [13],
+    "expected_business_outcome": "Confirms availability for 5 units",
+    "evaluation_criteria": "product_id=13"
+  },
+  {
+    "id": "INV-10",
+    "category": "inventory",
+    "description": "Concurrent reservation check: stock 15, reserved 2, available 13",
+    "user_input": "concurrent stock availability",
+    "initial_stock": 15,
+    "reserved_quantity": 2,
+    "available_quantity": 13,
+    "expected_business_outcome": "Available inventory properly excludes reserved quantities",
+    "evaluation_criteria": "available == initial - reserved"
+  },
+  {
+    "id": "INV-11",
+    "category": "inventory",
+    "description": "Stock check for non-existent product 999",
+    "user_input": "check inventory for product 999",
+    "expected_intent": "inventory",
+    "expected_tool": "check_inventory",
+    "expected_args": {"product_id": 999},
+    "expected_product_ids": [],
+    "expected_business_outcome": "Product not found message returned",
+    "evaluation_criteria": "No exception raised"
+  },
+  {
+    "id": "INV-12",
+    "category": "inventory",
+    "description": "Stock check for Dell UltraSharp 27 (stock=10)",
+    "user_input": "is product 21 in stock?",
+    "expected_intent": "inventory",
+    "expected_tool": "check_inventory",
+    "expected_args": {"product_id": 21},
+    "expected_product_ids": [21],
+    "expected_business_outcome": "Returns in_stock status",
+    "evaluation_criteria": "product_id=21"
+  }
+]

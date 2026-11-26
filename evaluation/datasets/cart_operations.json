@@ -1,0 +1,207 @@
+[
+  {
+    "id": "CART-01",
+    "category": "cart_operations",
+    "description": "Add single product to cart with explicit quantity 1",
+    "user_input": "add 1 unit of product 9 to cart",
+    "expected_intent": "cart_add",
+    "expected_tool": "add_to_cart",
+    "expected_args": {
+      "product_id": 9,
+      "quantity": 1
+    },
+    "expected_product_ids": [
+      9
+    ],
+    "expected_business_outcome": "1 unit of OnePlus 12 added to customer cart",
+    "evaluation_criteria": "Tool add_to_cart called with product_id=9 and quantity=1"
+  },
+  {
+    "id": "CART-02",
+    "category": "cart_operations",
+    "description": "Add product with explicit quantity 2",
+    "user_input": "add 2 units of product 1 to cart",
+    "expected_intent": "cart_add",
+    "expected_tool": "add_to_cart",
+    "expected_args": {
+      "product_id": 1,
+      "quantity": 2
+    },
+    "expected_product_ids": [
+      1
+    ],
+    "expected_business_outcome": "2 units of ROG Strix laptop added to cart",
+    "evaluation_criteria": "Tool add_to_cart called with product_id=1 and quantity=2"
+  },
+  {
+    "id": "CART-03",
+    "category": "cart_operations",
+    "description": "Add multiple distinct products sequentially",
+    "user_input": "add product 18 and product 19 to my cart",
+    "expected_intent": "cart_add",
+    "expected_tool": "add_to_cart",
+    "expected_args": {
+      "product_id": 18,
+      "quantity": 1
+    },
+    "expected_product_ids": [
+      18,
+      19
+    ],
+    "expected_business_outcome": "Both MX Master mouse and Keychron keyboard added",
+    "evaluation_criteria": "Both products added to cart"
+  },
+  {
+    "id": "CART-04",
+    "category": "cart_operations",
+    "description": "View cart items and subtotal",
+    "user_input": "what is currently in my shopping cart?",
+    "expected_intent": "cart_view",
+    "expected_tool": "view_cart",
+    "expected_args": {},
+    "expected_product_ids": [],
+    "expected_business_outcome": "Returns current cart items and total amount",
+    "evaluation_criteria": "Tool view_cart called"
+  },
+  {
+    "id": "CART-05",
+    "category": "cart_operations",
+    "description": "Remove single product from cart",
+    "user_input": "remove product 1 from my cart",
+    "expected_intent": "cart_remove",
+    "expected_tool": "remove_from_cart",
+    "expected_args": {
+      "product_id": 1
+    },
+    "expected_product_ids": [
+      1
+    ],
+    "expected_business_outcome": "Product 1 removed from cart",
+    "evaluation_criteria": "Tool remove_from_cart called with product_id=1"
+  },
+  {
+    "id": "CART-06",
+    "category": "cart_operations",
+    "description": "Update product quantity in cart from 1 to 3",
+    "user_input": "change quantity of product 9 in my cart to 3",
+    "expected_intent": "cart_update",
+    "expected_tool": "add_to_cart",
+    "expected_args": {
+      "product_id": 9,
+      "quantity": 3
+    },
+    "expected_product_ids": [
+      9
+    ],
+    "expected_business_outcome": "Cart item quantity updated to 3",
+    "evaluation_criteria": "Cart quantity matches 3"
+  },
+  {
+    "id": "CART-07",
+    "category": "cart_operations",
+    "description": "Duplicate product addition: adding product already in cart adds to quantity",
+    "user_input": "add another OnePlus 12 5G to cart",
+    "expected_intent": "cart_add",
+    "expected_tool": "add_to_cart",
+    "expected_args": {
+      "product_id": 9,
+      "quantity": 1
+    },
+    "expected_product_ids": [
+      9
+    ],
+    "expected_business_outcome": "Existing cart line item incremented without duplicate rows",
+    "evaluation_criteria": "Total line item quantity equals 2"
+  },
+  {
+    "id": "CART-08",
+    "category": "cart_operations",
+    "description": "Deterministic cart subtotal calculation: 1 OnePlus 12 (69999) + 2 AirPods Pro (24900 * 2) = 119799",
+    "user_input": "cart calculation assertion",
+    "items": [
+      {
+        "price": 69999.0,
+        "quantity": 1
+      },
+      {
+        "price": 24900.0,
+        "quantity": 2
+      }
+    ],
+    "expected_subtotal": 119799.0,
+    "expected_business_outcome": "Cart total matches 119,799.00 exactly",
+    "evaluation_criteria": "sum == 119799.0"
+  },
+  {
+    "id": "CART-09",
+    "category": "cart_operations",
+    "description": "Deterministic cart subtotal calculation: 1 MacBook Pro (199900) + 1 Dell Monitor (52990) = 252890",
+    "user_input": "high value cart assertion",
+    "items": [
+      {
+        "price": 199900.0,
+        "quantity": 1
+      },
+      {
+        "price": 52990.0,
+        "quantity": 1
+      }
+    ],
+    "expected_subtotal": 252890.0,
+    "expected_business_outcome": "Cart total matches 252,890.00 exactly",
+    "evaluation_criteria": "sum == 252890.0"
+  },
+  {
+    "id": "CART-10",
+    "category": "cart_operations",
+    "description": "Human-In-The-Loop gate check: unconfirmed checkout must be challenged",
+    "user_input": "checkout",
+    "action": "checkout_cart",
+    "confirmed": false,
+    "expected_action_permitted": false,
+    "expected_business_outcome": "Order placement halted; user prompted to confirm delivery address",
+    "evaluation_criteria": "allowed == False and challenge string returned"
+  },
+  {
+    "id": "CART-11",
+    "category": "cart_operations",
+    "description": "Human-In-The-Loop gate check: confirmed checkout execution",
+    "user_input": "confirm",
+    "action": "checkout_cart",
+    "confirmed": true,
+    "expected_action_permitted": true,
+    "expected_business_outcome": "Order created in database with status CONFIRMED",
+    "evaluation_criteria": "allowed == True"
+  },
+  {
+    "id": "CART-12",
+    "category": "cart_operations",
+    "description": "Empty cart checkout rejection",
+    "user_input": "checkout",
+    "cart_items_count": 0,
+    "expected_action_permitted": false,
+    "expected_business_outcome": "Rejects checkout because cart is empty",
+    "evaluation_criteria": "Error response: cart is empty"
+  },
+  {
+    "id": "CART-13",
+    "category": "cart_operations",
+    "description": "Insufficient inventory rejection at checkout",
+    "user_input": "checkout with out-of-stock item",
+    "cart_quantity": 100,
+    "available_stock": 25,
+    "expected_action_permitted": false,
+    "expected_business_outcome": "Checkout halted due to inventory shortage",
+    "evaluation_criteria": "Fails gracefully with stock error"
+  },
+  {
+    "id": "CART-14",
+    "category": "cart_operations",
+    "description": "Price consistency before checkout",
+    "user_input": "verify item price matches catalog price 69999",
+    "catalog_price": 69999.0,
+    "cart_price": 69999.0,
+    "expected_business_outcome": "Cart line item price matches current catalog price",
+    "evaluation_criteria": "catalog_price == cart_price"
+  }
+]

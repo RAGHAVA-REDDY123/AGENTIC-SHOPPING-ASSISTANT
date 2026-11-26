@@ -1,0 +1,187 @@
+[
+  {
+    "id": "WORKFLOW-01",
+    "category": "multi_step_workflows",
+    "session_name": "Full End-to-End Customer Purchase Journey",
+    "description": "Search -> Details -> Add to Cart -> Initiate Checkout -> HITL Address Confirmation",
+    "turns": [
+      {
+        "turn": 1,
+        "user_input": "suggest some mobiles under 80000",
+        "expected_tool": "search_products",
+        "expected_args": {"category": "mobiles", "max_price": 80000.0},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Returns OnePlus 12 and Pixel 8 Pro"
+      },
+      {
+        "turn": 2,
+        "user_input": "tell me more details about product 9",
+        "expected_tool": "get_product_details",
+        "expected_args": {"product_id": 9},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Returns specs of OnePlus 12"
+      },
+      {
+        "turn": 3,
+        "user_input": "add 1 unit of product 9 to cart",
+        "expected_tool": "add_to_cart",
+        "expected_args": {"product_id": 9, "quantity": 1},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Product 9 added to cart"
+      },
+      {
+        "turn": 4,
+        "user_input": "checkout",
+        "expected_tool": "checkout_cart",
+        "expected_args": {},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "HITL challenge displayed with address choices 1 and 2"
+      },
+      {
+        "turn": 5,
+        "user_input": "2",
+        "context": "Which address you'd like to use (reply with 1 or 2)?",
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Address 2 selected and order confirmed"
+      }
+    ]
+  },
+  {
+    "id": "WORKFLOW-02",
+    "category": "multi_step_workflows",
+    "session_name": "Search -> Compare -> Add Selected Product Journey",
+    "description": "Discovery -> 2-phone comparison -> Selection and addition to cart",
+    "turns": [
+      {
+        "turn": 1,
+        "user_input": "show me flagship phones",
+        "expected_tool": "search_products",
+        "expected_args": {"category": "mobiles"},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Lists flagship phones"
+      },
+      {
+        "turn": 2,
+        "user_input": "compare OnePlus 12 5G and Samsung Galaxy S24 Ultra",
+        "expected_route": "comparison_pipeline",
+        "expected_business_outcome": "Returns comparison table"
+      },
+      {
+        "turn": 3,
+        "user_input": "add the first one to my cart",
+        "context": "Comparison: 1. OnePlus 12 5G, 2. Samsung Galaxy S24 Ultra",
+        "expected_tool": "add_to_cart",
+        "expected_args": {"product_id": 9, "quantity": 1},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Resolves 'first one' to OnePlus 12 (ID 9) and adds to cart"
+      }
+    ]
+  },
+  {
+    "id": "WORKFLOW-03",
+    "category": "multi_step_workflows",
+    "session_name": "Product Details -> Stock Check -> Cart Addition",
+    "description": "Inspect specs -> Verify inventory -> Add to cart -> View cart",
+    "turns": [
+      {
+        "turn": 1,
+        "user_input": "tell me full specifications of product 2",
+        "expected_tool": "get_product_details",
+        "expected_args": {"product_id": 2},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Returns MacBook Pro M3 specs"
+      },
+      {
+        "turn": 2,
+        "user_input": "is it in stock right now?",
+        "context": "Product details for Apple MacBook Pro 14 M3 (Product ID 2).",
+        "expected_tool": "check_inventory",
+        "expected_args": {"product_id": 2},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Confirms in stock"
+      },
+      {
+        "turn": 3,
+        "user_input": "add it to my cart",
+        "context": "Apple MacBook Pro 14 M3 is in stock.",
+        "expected_tool": "add_to_cart",
+        "expected_args": {"product_id": 2, "quantity": 1},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Adds MacBook Pro to cart"
+      },
+      {
+        "turn": 4,
+        "user_input": "view my cart",
+        "expected_tool": "view_cart",
+        "expected_args": {},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Displays cart with MacBook Pro subtotal 199,900"
+      }
+    ]
+  },
+  {
+    "id": "WORKFLOW-04",
+    "category": "multi_step_workflows",
+    "session_name": "Search -> Add Multiple Items -> View Cart",
+    "description": "Search accessories -> Add mouse -> Add keyboard -> View total",
+    "turns": [
+      {
+        "turn": 1,
+        "user_input": "show me computer accessories",
+        "expected_tool": "search_products",
+        "expected_args": {"category": "accessories"},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Returns mouse, keyboard, monitor, power bank"
+      },
+      {
+        "turn": 2,
+        "user_input": "add product 18 to cart",
+        "expected_tool": "add_to_cart",
+        "expected_args": {"product_id": 18, "quantity": 1},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Logitech mouse added (8,995)"
+      },
+      {
+        "turn": 3,
+        "user_input": "add product 19 to cart",
+        "expected_tool": "add_to_cart",
+        "expected_args": {"product_id": 19, "quantity": 1},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Keychron keyboard added (17,999)"
+      },
+      {
+        "turn": 4,
+        "user_input": "what is my cart total?",
+        "expected_tool": "view_cart",
+        "expected_args": {},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Returns cart total of 26,994"
+      }
+    ]
+  },
+  {
+    "id": "WORKFLOW-05",
+    "category": "multi_step_workflows",
+    "session_name": "Search -> Follow-up reference 'add the second one'",
+    "description": "User references second item from previous search results list",
+    "turns": [
+      {
+        "turn": 1,
+        "user_input": "show me noise cancelling headphones",
+        "expected_tool": "search_products",
+        "expected_args": {"category": "headphones"},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "1. Sony WH-1000XM5, 2. Bose QuietComfort Ultra"
+      },
+      {
+        "turn": 2,
+        "user_input": "add the second one to my cart",
+        "context": "1. Sony WH-1000XM5 (ID 11), 2. Bose QuietComfort Ultra (ID 12)",
+        "expected_tool": "add_to_cart",
+        "expected_args": {"product_id": 12, "quantity": 1},
+        "expected_route": "shopping_agent",
+        "expected_business_outcome": "Bose QC Ultra added to cart"
+      }
+    ]
+  }
+]

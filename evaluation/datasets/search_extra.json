@@ -1,0 +1,62 @@
+[
+  {
+    "id": "SRCH-16",
+    "category": "product_search",
+    "description": "Search with multi-token budget: 'under 1.5 lakh'",
+    "user_input": "laptops under 1.5 lakh with 16gb ram",
+    "expected_intent": "search",
+    "expected_tool": "search_products",
+    "expected_args": {"max_price": 150000.0, "category": "laptops"},
+    "expected_product_ids": [1, 4, 5],
+    "expected_business_outcome": "Converts 1.5 lakh to 150,000 and filters laptops",
+    "evaluation_criteria": "max_price == 150000.0"
+  },
+  {
+    "id": "SRCH-17",
+    "category": "product_search",
+    "description": "Search for noise cancelling earbuds under 25000",
+    "user_input": "wireless earbuds with active noise cancellation under 25000",
+    "expected_intent": "search",
+    "expected_tool": "search_products",
+    "expected_args": {"category": "headphones", "max_price": 25000.0},
+    "expected_product_ids": [13, 15],
+    "expected_business_outcome": "Returns AirPods Pro 2 and Sony WF-1000XM5",
+    "evaluation_criteria": "IDs 13 and 15 returned"
+  },
+  {
+    "id": "SRCH-18",
+    "category": "product_search",
+    "description": "Search for Apple accessories specifically",
+    "user_input": "Apple smartwatch or headphones",
+    "expected_intent": "search",
+    "expected_tool": "search_products",
+    "expected_args": {"brand": "Apple"},
+    "expected_product_ids": [13, 16],
+    "expected_business_outcome": "Returns AirPods Pro 2 and Apple Watch Series 9",
+    "evaluation_criteria": "brand is Apple"
+  },
+  {
+    "id": "SRCH-19",
+    "category": "product_search",
+    "description": "Search for gaming gear across categories",
+    "user_input": "gaming equipment: laptop or mechanical keyboard",
+    "expected_intent": "search",
+    "expected_tool": "search_products",
+    "expected_args": {"query": "gaming"},
+    "expected_product_ids": [1, 4, 19],
+    "expected_business_outcome": "Returns ROG Strix, Legion Pro, Keychron Q1",
+    "evaluation_criteria": "Gaming products retrieved"
+  },
+  {
+    "id": "SRCH-20",
+    "category": "product_search",
+    "description": "Search with minimum rating filter: 4.6 and above",
+    "user_input": "top rated laptops with rating 4.6 or higher",
+    "expected_intent": "search",
+    "expected_tool": "search_products",
+    "expected_args": {"category": "laptops", "min_rating": 4.6},
+    "expected_product_ids": [2, 3],
+    "expected_business_outcome": "Returns MacBook Pro (4.8) and Dell XPS (4.7)",
+    "evaluation_criteria": "min_rating == 4.6"
+  }
+]

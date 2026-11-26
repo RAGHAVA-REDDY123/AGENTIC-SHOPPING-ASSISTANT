@@ -1,0 +1,112 @@
+[
+  {
+    "id": "COMP-01",
+    "category": "product_comparison",
+    "description": "Two-product comparison between flagship phones",
+    "user_input": "compare OnePlus 12 5G and Samsung Galaxy S24 Ultra",
+    "expected_intent": "compare",
+    "expected_tool": "compare_products",
+    "expected_product_ids": [9, 7],
+    "expected_business_outcome": "Side-by-side spec, price, and camera comparison",
+    "evaluation_criteria": "Routed to comparison pipeline, both IDs resolved"
+  },
+  {
+    "id": "COMP-02",
+    "category": "product_comparison",
+    "description": "Two-product comparison between high-end laptops",
+    "user_input": "compare Apple MacBook Pro 14 M3 vs Dell XPS 15 9530 Workstation",
+    "expected_intent": "compare",
+    "expected_tool": "compare_products",
+    "expected_product_ids": [2, 3],
+    "expected_business_outcome": "Comparison of M3 vs Intel i7/i9, price and RAM specs",
+    "evaluation_criteria": "Routed to comparison pipeline, IDs 2 and 3 resolved"
+  },
+  {
+    "id": "COMP-03",
+    "category": "product_comparison",
+    "description": "Multi-product comparison (3 premium noise cancelling headphones)",
+    "user_input": "compare Sony WH-1000XM5, Bose QuietComfort Ultra, and Sennheiser Momentum 4",
+    "expected_intent": "compare",
+    "expected_tool": "compare_products",
+    "expected_product_ids": [11, 12, 14],
+    "expected_business_outcome": "3-way comparison table of battery, ANC, and price",
+    "evaluation_criteria": "All 3 products parsed and compared"
+  },
+  {
+    "id": "COMP-04",
+    "category": "product_comparison",
+    "description": "Different product categories comparison query",
+    "user_input": "compare MacBook Air M2 vs Apple Watch Series 9",
+    "expected_intent": "compare",
+    "expected_tool": "compare_products",
+    "expected_product_ids": [5, 16],
+    "expected_business_outcome": "Notes differing categories (laptop vs smartwatch) and compares price and brand",
+    "evaluation_criteria": "Handled gracefully without crashing"
+  },
+  {
+    "id": "COMP-05",
+    "category": "product_comparison",
+    "description": "Comparison with incorrect product name variant",
+    "user_input": "compare OnePlus 12 with Galaxy S24",
+    "expected_intent": "compare",
+    "expected_tool": "compare_products",
+    "expected_product_ids": [9, 7],
+    "expected_business_outcome": "Fuzzy matches Galaxy S24 to Samsung Galaxy S24 Ultra",
+    "evaluation_criteria": "Matches product IDs 9 and 7"
+  },
+  {
+    "id": "COMP-06",
+    "category": "product_comparison",
+    "description": "Comparison of smartwatches on battery and price",
+    "user_input": "compare Apple Watch Series 9 vs Samsung Galaxy Watch6 Classic",
+    "expected_intent": "compare",
+    "expected_tool": "compare_products",
+    "expected_product_ids": [16, 17],
+    "expected_business_outcome": "Comparison of watchOS vs WearOS, battery and prices",
+    "evaluation_criteria": "IDs 16 and 17 resolved"
+  },
+  {
+    "id": "COMP-07",
+    "category": "product_comparison",
+    "description": "Comparison between earbuds: AirPods Pro 2 vs Sony WF-1000XM5",
+    "user_input": "compare Apple AirPods Pro 2nd Gen USB-C vs Sony WF-1000XM5 True Wireless Earbuds",
+    "expected_intent": "compare",
+    "expected_tool": "compare_products",
+    "expected_product_ids": [13, 15],
+    "expected_business_outcome": "Comparison of ANC, battery, driver size, and price",
+    "evaluation_criteria": "IDs 13 and 15 resolved"
+  },
+  {
+    "id": "COMP-08",
+    "category": "product_comparison",
+    "description": "Missing second product in comparison query",
+    "user_input": "compare OnePlus 12 with",
+    "expected_intent": "compare",
+    "expected_tool": "search_products",
+    "expected_product_ids": [9],
+    "expected_business_outcome": "Prompts user to specify second product to compare",
+    "evaluation_criteria": "Does not crash or invent fake second product"
+  },
+  {
+    "id": "COMP-09",
+    "category": "product_comparison",
+    "description": "Gaming laptops comparison: ASUS ROG Strix G15 vs Lenovo Legion Pro 5i",
+    "user_input": "compare ASUS ROG Strix G15 vs Lenovo Legion Pro 5i",
+    "expected_intent": "compare",
+    "expected_tool": "compare_products",
+    "expected_product_ids": [1, 4],
+    "expected_business_outcome": "Compares RTX graphics, refresh rate, and pricing",
+    "evaluation_criteria": "IDs 1 and 4 resolved"
+  },
+  {
+    "id": "COMP-10",
+    "category": "product_comparison",
+    "description": "Premium wireless headphones comparison: Sony XM5 vs Bose QC Ultra",
+    "user_input": "compare Sony WH-1000XM5 vs Bose QuietComfort Ultra",
+    "expected_intent": "compare",
+    "expected_tool": "compare_products",
+    "expected_product_ids": [11, 12],
+    "expected_business_outcome": "Detailed comparison of ANC, comfort, and price",
+    "evaluation_criteria": "IDs 11 and 12 resolved"
+  }
+]

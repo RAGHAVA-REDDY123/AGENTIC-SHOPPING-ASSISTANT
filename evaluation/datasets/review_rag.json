@@ -1,0 +1,115 @@
+[
+  {
+    "id": "RAG-01",
+    "category": "review_rag",
+    "product_id": 9,
+    "product_name": "OnePlus 12 5G",
+    "user_input": "How is the battery backup and charging speed on OnePlus 12?",
+    "retrieved_context": "Battery easily lasts 1.5 days with 7-8 hours SOT on heavy usage with 100W fast charging reaching full in 26 minutes.",
+    "ground_truth_claims": [
+      "Lasts 1.5 days",
+      "7 to 8 hours screen on time",
+      "100W fast charging in about 26 minutes"
+    ],
+    "negative_hallucinations": [
+      "The phone only lasts 2 hours and explodes during charging."
+    ],
+    "expected_business_outcome": "Accurately conveys 1.5 days battery and 100W charging without hallucinating"
+  },
+  {
+    "id": "RAG-02",
+    "category": "review_rag",
+    "product_id": 6,
+    "product_name": "Apple iPhone 15 Pro Max",
+    "user_input": "Is there any heating issue with the A17 Pro chip on iPhone 15 Pro Max?",
+    "retrieved_context": "Initial iOS 17 had minor warmth during setup, but post iOS 17.0.3 update thermal management is great with no noticeable overheating.",
+    "ground_truth_claims": [
+      "Initial warmth fixed in iOS 17.0.3 update",
+      "Thermal management is stable with no overheating"
+    ],
+    "negative_hallucinations": [
+      "It overheats constantly to 90 degrees Celsius making it impossible to hold."
+    ],
+    "expected_business_outcome": "Explains iOS 17.0.3 resolved initial warmth"
+  },
+  {
+    "id": "RAG-03",
+    "category": "review_rag",
+    "product_id": 7,
+    "product_name": "Samsung Galaxy S24 Ultra",
+    "user_input": "How is the zoom camera quality in low light on S24 Ultra?",
+    "retrieved_context": "The 5x optical zoom camera takes crisp shots at night with Nightography, and 10x is very usable with AI enhancement.",
+    "ground_truth_claims": [
+      "5x optical zoom performs well in low light with Nightography",
+      "10x remains usable due to AI enhancement"
+    ],
+    "negative_hallucinations": [
+      "The camera lens is blurry at night and cannot zoom."
+    ],
+    "expected_business_outcome": "Confirms strong Nightography zoom performance"
+  },
+  {
+    "id": "RAG-04",
+    "category": "review_rag",
+    "product_id": 2,
+    "product_name": "Apple MacBook Pro 14 M3",
+    "user_input": "How is the fan noise and heat dissipation on MacBook Pro M3?",
+    "retrieved_context": "The M3 chip runs whisper quiet. The fans barely ever spin up even during 4K video rendering in Final Cut Pro.",
+    "ground_truth_claims": [
+      "Whisper quiet operation",
+      "Fans rarely spin up during 4K video rendering"
+    ],
+    "negative_hallucinations": [
+      "The fan sounds like a jet engine and burns user laps."
+    ],
+    "expected_business_outcome": "Confirms quiet acoustic profile"
+  },
+  {
+    "id": "RAG-05",
+    "category": "review_rag",
+    "product_id": 11,
+    "product_name": "Sony WH-1000XM5 Wireless Headphones",
+    "user_input": "What do customer reviews say about call microphone quality in noisy areas on Sony XM5?",
+    "retrieved_context": "The 4-beamforming mic setup with AI noise reduction isolates voice remarkably well even when walking on busy streets.",
+    "ground_truth_claims": [
+      "4 beamforming microphones with AI noise reduction",
+      "Isolates voice cleanly on busy city streets"
+    ],
+    "negative_hallucinations": [
+      "Microphone does not work and muffles user voice completely."
+    ],
+    "expected_business_outcome": "Confirms clear microphone quality in noisy conditions"
+  },
+  {
+    "id": "RAG-06",
+    "category": "review_rag",
+    "product_id": 8,
+    "product_name": "Google Pixel 8 Pro",
+    "user_input": "What do customer reviews say about camera AI features like Best Take on Pixel 8 Pro?",
+    "retrieved_context": "Best Take and Magic Audio Eraser work like magic on family photos, fixing blinking faces effortlessly.",
+    "ground_truth_claims": [
+      "Best Take fixes blinking faces in group photos",
+      "Magic Audio Eraser works well"
+    ],
+    "negative_hallucinations": [
+      "AI features ruin pictures and delete faces."
+    ],
+    "expected_business_outcome": "Praises Best Take for family group shots"
+  },
+  {
+    "id": "RAG-07",
+    "category": "review_rag",
+    "product_id": 1,
+    "product_name": "ASUS ROG Strix G15 Gaming Laptop",
+    "user_input": "How are the thermals during extended gaming on ASUS ROG Strix G15?",
+    "retrieved_context": "Liquid metal thermal compound keeps CPU temps under 82C during 4-hour Cyberpunk sessions with dual fans on performance mode.",
+    "ground_truth_claims": [
+      "Liquid metal thermal compound keeps CPU under 82C",
+      "Dual fans on performance mode maintain thermals during 4-hour gaming sessions"
+    ],
+    "negative_hallucinations": [
+      "Laptop shuts down from thermal throttling within 5 minutes."
+    ],
+    "expected_business_outcome": "Confirms stable gaming thermals"
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "timestamp": "20261126_150147",
+  "overall_pass_rate": 100.0,
+  "failed_case_ids": [],
+  "metrics": {
+    "Tool selection accuracy": 100.0,
+    "Tool argument accuracy": 100.0,
+    "Workflow success rate": 100.0,
+    "Product retrieval Precision@5": 100.0,
+    "Response groundedness": 100.0,
+    "Critical cart/stock correctness": 100.0,
+    "Regression test pass rate": 100.0
+  },
+  "performance": {
+    "avg_latency_ms": 152.64,
+    "p50_latency_ms": 2.71,
+    "p95_latency_ms": 696.72,
+    "max_latency_ms": 2986.63,
+    "avg_tool_latency_ms": 9.09,
+    "total_llm_calls": 1,
+    "total_prompt_tokens": 1840,
+    "total_completion_tokens": 320,
+    "total_tokens": 2160,
+    "estimated_cost_usd": 0.00134,
+    "tool_failure_rate_pct": 0.0,
+    "total_tool_calls": 45
+  }
+}
