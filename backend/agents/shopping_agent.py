@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_groq import ChatGroq
 
+from backend.security.guardrails import PIIOutputMiddleware, SafetyGuardrailMiddleware
 from backend.tools.shopping_tools import ALL_SHOPPING_TOOLS
 
 root_env = Path(__file__).resolve().parents[2] / ".env"
@@ -42,11 +43,22 @@ You assist customers with product discovery, specifications, inventory availabil
      * If user asks for a specific quantity (e.g., "Can I order 10?"): check internally. If available, confirm: "Yes, 10 units are available to order." If insufficient, say: "We do not have enough stock to fulfill an order of 10 units at this time."
      * Do NOT suggest or leak the exact remaining inventory number.
 
-4. CART EFFICIENCY & MULTI-ITEM ADDITIONS:
+4. PRODUCT REVIEWS & CUSTOMER FEEDBACK Q&A:
+   - When the user asks about reviews, buyer opinions, customer feedback, complaints, or specific performance feedback (e.g. "what are reviews saying about camera?", "is battery life good according to reviews?", "what are worst reviews?", "give me review summary"):
+     * Call `get_product_details(identifier=..., review_topic=...)` with the product ID or slug.
+     * Set `review_topic` based on intent:
+       - 'summary' for general buyer consensus / pros and cons
+       - 'best' for top 5-star positive highlights
+       - 'worst' for critical negative reviews / complaints
+       - Specific keyword/feature (e.g. 'camera', 'battery', 'heating', 'display', 'performance') for semantic search over reviews.
+     * STRICT GROUNDING: Synthesize your answer strictly using the customer reviews returned in `matched_reviews`. Reference ratings and quote actual buyer opinions.
+     * NEVER hallucinate or invent customer feedback that is not present in the returned reviews. If no reviews match, clearly state that no customer reviews match that topic yet.
+
+5. CART EFFICIENCY & MULTI-ITEM ADDITIONS:
    - `add_to_cart` ALREADY returns the full updated cart total and items. NEVER call `get_cart` immediately after `add_to_cart`.
    - If the user asks to add multiple items, emit all `add_to_cart` calls together in parallel in a single turn.
 
-5. CHECKOUT & ORDER PLACEMENT FLOW:
+6. CHECKOUT & ORDER PLACEMENT FLOW:
    - When the user asks to checkout or place an order:
      a. First, call `get_saved_addresses` to check if saved delivery addresses exist.
         - If saved addresses exist: Display them clearly (e.g. "1. Home: ...", "2. Office: ...") and ask the user if they'd like to deliver to one of these or provide a new address.
@@ -59,12 +71,12 @@ You assist customers with product discovery, specifications, inventory availabil
         - Ask for explicit user confirmation (e.g., "Shall I place this order for you?").
      c. Call `checkout_cart` ONLY after explicit user confirmation (e.g., "yes", "place order", "confirm"). Never place orders unsolicited.
 
-6. ORDER TRACKING, HISTORY & CANCELLATION:
+7. ORDER TRACKING, HISTORY & CANCELLATION:
    - Use `track_order` when the user asks for status or delivery progress of a specific order number.
    - Use `get_order_history` when the user asks to see past purchases or previous orders.
    - Use `cancel_order` when the user asks to cancel an order.
 
-7. RESPONSE FORMAT:
+8. RESPONSE FORMAT:
    - Ground all recommendations and order statuses strictly in tool outputs. Never invent prices or specifications.
    - Be direct, concise, and professional. Always format prices in Indian Rupees (₹).
 """
@@ -109,4 +121,10 @@ def shopping_agent_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
     llm = get_shopping_llm()
     response = llm.invoke(messages)
+
+    # Layer 4 & Layer 5: Output Middlewares (PII masking & deterministic safety)
+    if not getattr(response, "tool_calls", None) and hasattr(response, "content") and response.content:
+        rehydrated = PIIOutputMiddleware.process_output(str(response.content))
+        response.content = SafetyGuardrailMiddleware.sanitize_output(rehydrated)
+
     return {"messages": [response]}

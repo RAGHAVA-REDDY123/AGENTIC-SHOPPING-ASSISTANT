@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.database.base import Base
+from backend.database.connection import Base
 
 
 class CustomerAddress(Base):

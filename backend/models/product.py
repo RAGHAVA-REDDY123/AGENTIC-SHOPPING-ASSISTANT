@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -15,7 +16,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.database.base import Base
+from backend.database.connection import Base
 
 from pgvector.sqlalchemy import Vector
 
@@ -65,6 +66,11 @@ class Product(Base):
     )
     cart_items: Mapped[List["CartItem"]] = relationship(
         "CartItem",
+        back_populates="product",
+        cascade="all, delete-orphan",
+    )
+    reviews: Mapped[List["ProductReview"]] = relationship(
+        "ProductReview",
         back_populates="product",
         cascade="all, delete-orphan",
     )
@@ -184,3 +190,32 @@ class CartItem(Base):
 
     def __repr__(self) -> str:
         return f"<CartItem(id={self.id}, cart_id={self.cart_id}, product_id={self.product_id}, quantity={self.quantity})>"
+
+
+class ProductReview(Base):
+    __tablename__ = "product_reviews"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    product_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    author_name: Mapped[str] = mapped_column(String(100), nullable=False, default="Verified Buyer")
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    comment: Mapped[str] = mapped_column(Text, nullable=False)
+    helpful_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    verified_purchase: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    embedding: Mapped[Optional[List[float]]] = mapped_column(Vector(384), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    product: Mapped["Product"] = relationship("Product", back_populates="reviews")
+
+    __table_args__ = (
+        CheckConstraint("rating >= 1 AND rating <= 5", name="check_review_rating_range"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<ProductReview(id={self.id}, product_id={self.product_id}, rating={self.rating}, title='{self.title}')>"
+

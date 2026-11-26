@@ -4,6 +4,7 @@ from typing import Optional
 from langchain_core.tools import tool
 
 from backend.database.connection import get_db_session
+from backend.security.guardrails import HumanInTheLoopMiddleware
 from backend.services.cart_service import CartService
 from backend.services.inventory_service import InventoryService
 from backend.services.order_service import OrderService
@@ -35,6 +36,7 @@ def search_products(
         limit: Number of items to return (default 5).
     """
     try:
+        query = HumanInTheLoopMiddleware.sanitize_search_query(query)
         with get_db_session() as db:
             service = ProductService(db)
             min_p = Decimal(str(min_price)) if min_price is not None else None
@@ -87,12 +89,22 @@ def search_products(
 
 
 @tool
-def get_product_details(identifier: str) -> str:
-    """Retrieve detailed specifications, features, and inventory for a product ID or slug."""
+def get_product_details(identifier: str, review_topic: Optional[str] = None) -> str:
+    """
+    Retrieve product specifications, features, or verified customer reviews.
+    
+    Args:
+        identifier: Product ID or slug (e.g. '1', 'oneplus-12-5g', 'asus-rog-strix-g15-gaming').
+        review_topic: Optional review aspect to inspect verified buyer opinions:
+                      - 'summary' (overall buyer consensus, pros & cons)
+                      - 'best' (top 5-star positive reviews)
+                      - 'worst' (critical negative reviews & complaints)
+                      - Specific topic (e.g. 'camera', 'battery life', 'heating', 'display', 'fan noise').
+    """
     try:
         with get_db_session() as db:
             service = ProductService(db)
-            details = service.get_product_details(identifier)
+            details = service.get_product_details(identifier, review_topic=review_topic)
             if not details:
                 return f"Product '{identifier}' was not found in the catalog."
 
@@ -100,27 +112,26 @@ def get_product_details(identifier: str) -> str:
             if not details.get("in_stock", False) or stock_qty <= 0:
                 stock_status = "out_of_stock"
             elif stock_qty <= 3:
-                stock_status = f"low_stock (Only {stock_qty} left)"
+                stock_status = "low_stock"
             else:
                 stock_status = "in_stock"
 
             formatted = {
                 "id": details["id"],
                 "name": details["name"],
-                "slug": details["slug"],
-                "description": details["description"],
                 "brand": details["brand"],
                 "category": details["category_slug"],
                 "price": f"₹{details['price']:,.2f}",
-                "original_price": f"₹{details['original_price']:,.2f}",
-                "discount": f"{details['discount_percent']}% off",
                 "rating": f"{details['rating']}/5.0 ({details['review_count']} reviews)",
                 "stock_status": stock_status,
                 "features": details["features"],
                 "specifications": details["specifications"],
-                "tags": details["tags"],
             }
-            return json.dumps(formatted, indent=2)
+            if "customer_reviews" in details:
+                formatted["review_topic"] = details.get("review_topic")
+                formatted["matched_reviews"] = details["customer_reviews"]
+
+            return json.dumps(formatted, separators=(",", ":"))
     except Exception as e:
         return f"Database error fetching product details: {str(e)}"
 
@@ -150,6 +161,7 @@ def add_to_cart(product_id: int, quantity: int = 1) -> str:
     Do NOT call get_cart after calling this tool.
     """
     try:
+        quantity = HumanInTheLoopMiddleware.validate_cart_quantity(quantity)
         with get_db_session() as db:
             service = CartService(db)
             res = service.add_to_cart(product_id=product_id, quantity=quantity)
@@ -195,6 +207,7 @@ def remove_from_cart(product_id: int) -> str:
 def update_cart_item(product_id: int, quantity: int) -> str:
     """Update item quantity in cart. Setting quantity to 0 removes the item."""
     try:
+        quantity = HumanInTheLoopMiddleware.validate_cart_quantity(quantity, min_val=0, max_val=10)
         with get_db_session() as db:
             service = CartService(db)
             res = service.update_cart_item(product_id=product_id, quantity=quantity)
@@ -274,6 +287,11 @@ def add_saved_address(
 ) -> str:
     """Save a new delivery address for the customer."""
     try:
+        # Layer 3 Detokenization: resolve PII tokens back to real values for DB
+        recipient_name = HumanInTheLoopMiddleware.detokenize_tool_argument(recipient_name)
+        phone = HumanInTheLoopMiddleware.detokenize_tool_argument(phone)
+        address_line = HumanInTheLoopMiddleware.detokenize_tool_argument(address_line)
+
         with get_db_session() as db:
             service = OrderService(db)
             res = service.add_saved_address(
@@ -309,6 +327,11 @@ def checkout_cart(
         address_id: Optional integer ID of a chosen saved address.
     """
     try:
+        # Layer 3 Detokenization: resolve PII tokens back to real values for DB
+        shipping_address = HumanInTheLoopMiddleware.detokenize_tool_argument(shipping_address)
+        contact_phone = HumanInTheLoopMiddleware.detokenize_tool_argument(contact_phone)
+        recipient_name = HumanInTheLoopMiddleware.detokenize_tool_argument(recipient_name)
+
         with get_db_session() as db:
             service = OrderService(db)
             res = service.checkout_cart(

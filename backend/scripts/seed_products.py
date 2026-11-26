@@ -10,7 +10,7 @@ if str(project_root) not in sys.path:
 
 from backend.database.base import Base
 from backend.database.connection import engine, get_db_session
-from backend.models.product import Inventory, Product
+from backend.models.product import Inventory, Product, ProductReview
 from backend.schemas.product import ProductCreate
 from backend.services.product_service import EmbeddingService
 
@@ -573,6 +573,166 @@ SEED_CATALOG: List[Dict[str, Any]] = [
     },
 ]
 
+# Verified customer reviews for catalog Q&A and semantic review retrieval
+SEED_REVIEWS: Dict[str, List[Dict[str, Any]]] = {
+    "oneplus-12-5g": [
+        {
+            "author_name": "Rohan M.",
+            "rating": 5,
+            "title": "Phenomenal Hasselblad camera and ultra-fast charging",
+            "comment": "The camera performance in daylight and low-light is outstanding. Photos are sharp with natural colors thanks to the Hasselblad tuning. Night mode captures crisp detail without excessive noise. The 100W charging fills the 5400mAh battery in under 30 minutes!",
+            "helpful_votes": 42,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Ananya S.",
+            "rating": 5,
+            "title": "Battery beast and vibrant display",
+            "comment": "Battery life easily lasts 1.5 to 2 days on moderate use. The 2K ProXDR screen is insanely bright outdoors in direct sunlight. OxygenOS is super snappy and smooth.",
+            "helpful_votes": 28,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Karthik V.",
+            "rating": 4,
+            "title": "Great performance, slight heating during heavy gaming",
+            "comment": "Camera is top notch and daily performance is blazing fast with the Snapdragon 8 Gen 3. However, during 60fps high-setting gaming sessions on Genshin Impact, the phone gets moderately warm around the camera island, though it never throttles severely.",
+            "helpful_votes": 19,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Deepak T.",
+            "rating": 2,
+            "title": "Bulky camera bump and curved screen issues",
+            "comment": "The circular camera module makes it top heavy and prone to wobbling on flat desks. Also accidental palm touches on the curved edge screen happen frequently when texting one-handed.",
+            "helpful_votes": 15,
+            "verified_purchase": True,
+        },
+    ],
+    "asus-rog-strix-g15-gaming": [
+        {
+            "author_name": "Vikram P.",
+            "rating": 5,
+            "title": "Esports monster with great cooling",
+            "comment": "RTX 4060 and Ryzen 9 handle Valorant, Cyberpunk, and Warzone with ease at high settings. The liquid metal cooling keeps temperatures below 80C under heavy gaming loads.",
+            "helpful_votes": 35,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Sameer K.",
+            "rating": 4,
+            "title": "High performance, fan noise can get loud in Turbo",
+            "comment": "Solid FPS in all AAA titles and the 144Hz display is buttery smooth. Just be prepared for aggressive fan noise when running on Turbo mode during intense gaming; a gaming headset is recommended.",
+            "helpful_votes": 22,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Arjun D.",
+            "rating": 2,
+            "title": "Heavy power brick and poor battery backup",
+            "comment": "Battery barely lasts 2 hours unplugged when doing basic tasks like web browsing. The charging brick is huge and heavy to carry to college daily.",
+            "helpful_votes": 17,
+            "verified_purchase": True,
+        },
+    ],
+    "apple-macbook-pro-14-m3": [
+        {
+            "author_name": "Pooja N.",
+            "rating": 5,
+            "title": "Incredible battery life and silent power",
+            "comment": "Battery lasts a full 16-18 hours of coding and video editing without ever spinning the fans audibly. The Liquid Retina XDR screen is breathtaking for photo and video grading.",
+            "helpful_votes": 50,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Devashish G.",
+            "rating": 5,
+            "title": "Best audio and keyboard in any portable laptop",
+            "comment": "Speakers sound like a mini soundbar. The keyboard and trackpad ergonomics are unmatched. The M3 Pro chip renders 4K ProRes timelines instantly in Final Cut Pro.",
+            "helpful_votes": 31,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Naveen C.",
+            "rating": 3,
+            "title": "Expensive memory upgrades and fingerprint smudges",
+            "comment": "The base 18GB is fine, but Apple's upgrade pricing for storage and RAM is exorbitant. Also the Space Black finish still collects finger smudges and palm oils over time.",
+            "helpful_votes": 24,
+            "verified_purchase": True,
+        },
+    ],
+    "apple-iphone-15-pro-max": [
+        {
+            "author_name": "Siddharth R.",
+            "rating": 5,
+            "title": "5x optical telephoto camera is unmatched",
+            "comment": "The 5x tetraprism telephoto camera takes stunning portrait shots with crisp subject separation and natural bokeh. The titanium frame makes it noticeably lighter in hand than previous Pro Max models.",
+            "helpful_votes": 45,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Meera B.",
+            "rating": 4,
+            "title": "Action button is versatile, USB-C is finally here",
+            "comment": "Transferring 4K ProRes video over USB 3 speeds is lightning fast. Battery easily lasts all day even with heavy navigation and camera usage.",
+            "helpful_votes": 18,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Aditya J.",
+            "rating": 2,
+            "title": "Gets warm while fast charging and extended recording",
+            "comment": "The phone gets surprisingly warm during fast 27W wired charging and when shooting continuous 4K 60fps video outdoors in warm weather.",
+            "helpful_votes": 21,
+            "verified_purchase": True,
+        },
+    ],
+    "samsung-galaxy-s24-ultra": [
+        {
+            "author_name": "Rahul S.",
+            "rating": 5,
+            "title": "200MP camera and anti-reflective display",
+            "comment": "The Gorilla Armor glass cuts reflections dramatically outdoors. The 200MP sensor captures insane detail in daylight, and Circle to Search with Galaxy AI is genuinely useful.",
+            "helpful_votes": 39,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Sneha L.",
+            "rating": 4,
+            "title": "S-Pen productivity king and stellar zoom",
+            "comment": "Note taking, annotating PDFs, and battery stamina are top class. Zoom photos up to 30x are sharp and very usable for concerts and stadiums.",
+            "helpful_votes": 25,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Tanmay H.",
+            "rating": 3,
+            "title": "Sharp boxy corners dig into palms",
+            "comment": "The flat boxy frame and sharp corners make it uncomfortable to hold with one hand for long periods without a rounded protective case.",
+            "helpful_votes": 19,
+            "verified_purchase": True,
+        },
+    ],
+    "sony-wh-1000xm5-wireless": [
+        {
+            "author_name": "Amit K.",
+            "rating": 5,
+            "title": "Industry-leading noise cancellation and call quality",
+            "comment": "Blocks out airplane engine roar and crowded office chatter completely. Microphone clarity on Zoom calls is drastically improved, and battery life is easily 30+ hours.",
+            "helpful_votes": 48,
+            "verified_purchase": True,
+        },
+        {
+            "author_name": "Priyanka D.",
+            "rating": 3,
+            "title": "Does not fold compact like XM4",
+            "comment": "Great sound quality and ANC, but the new design doesn't fold inward. The carrying case is noticeably bulkier in my backpack compared to the older XM4.",
+            "helpful_votes": 33,
+            "verified_purchase": True,
+        },
+    ],
+}
+
 
 from sqlalchemy import text
 
@@ -662,17 +822,61 @@ def seed_product_catalog(verbose: bool = True) -> Dict[str, int]:
                 db.add(inv)
             inventory_count += 1
 
+        # 5. Seed customer reviews with pgvector dense embeddings
+        reviews_seeded = 0
+        if verbose:
+            print("Seeding verified customer reviews with vector embeddings...")
+
+        for slug, reviews_list in SEED_REVIEWS.items():
+            product_obj = db.query(Product).filter(Product.slug == slug).first()
+            if not product_obj:
+                continue
+
+            for r_data in reviews_list:
+                existing_rev = (
+                    db.query(ProductReview)
+                    .filter(
+                        ProductReview.product_id == product_obj.id,
+                        ProductReview.title == r_data["title"],
+                    )
+                    .first()
+                )
+                rev_text = f"{r_data['title']}: {r_data['comment']}"
+                rev_embedding = EmbeddingService.embed_text(rev_text)
+
+                if existing_rev:
+                    existing_rev.rating = r_data["rating"]
+                    existing_rev.comment = r_data["comment"]
+                    existing_rev.helpful_votes = r_data["helpful_votes"]
+                    existing_rev.verified_purchase = r_data.get("verified_purchase", True)
+                    existing_rev.embedding = rev_embedding
+                else:
+                    new_rev = ProductReview(
+                        product_id=product_obj.id,
+                        author_name=r_data["author_name"],
+                        rating=r_data["rating"],
+                        title=r_data["title"],
+                        comment=r_data["comment"],
+                        helpful_votes=r_data["helpful_votes"],
+                        verified_purchase=r_data.get("verified_purchase", True),
+                        embedding=rev_embedding,
+                    )
+                    db.add(new_rev)
+                reviews_seeded += 1
+
     summary = {
         "total_records": len(SEED_CATALOG),
         "inserted": inserted_count,
         "updated": updated_count,
         "inventory_records": inventory_count,
+        "reviews_seeded": reviews_seeded,
     }
 
     if verbose:
         print(f"Products inserted : {inserted_count}")
         print(f"Products updated  : {updated_count}")
         print(f"Inventory seeded  : {inventory_count}")
+        print(f"Reviews seeded    : {reviews_seeded}")
         print(f"Vectors embedded  : {embeddings_generated}")
         print("Catalog seeding completed successfully!")
         print("=" * 60)

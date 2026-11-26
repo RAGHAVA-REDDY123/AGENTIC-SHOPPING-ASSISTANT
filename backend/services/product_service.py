@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from backend.models.product import Product
 from backend.repositories.product_repository import ProductRepository
+from backend.repositories.review_repository import ReviewRepository
 
 
 class EmbeddingService:
@@ -181,13 +182,43 @@ class ProductService:
                 })
             return results
 
-    def get_product_details(self, identifier: Union[int, str]) -> Optional[Dict[str, Any]]:
+    def get_product_details(
+        self, identifier: Union[int, str], review_topic: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         product = self.product_repo.get_by_id(int(identifier)) if str(identifier).isdigit() else self.product_repo.get_by_slug(str(identifier))
         if not product:
             return None
 
         stock = (product.inventory.stock_quantity - product.inventory.reserved_quantity) if product.inventory else 0
-        return {
+
+        reviews_data = []
+        if review_topic:
+            query_vector = None
+            clean_focus = review_topic.strip().lower()
+            if clean_focus not in ("best", "positive", "top", "worst", "critical", "negative", "complaints", "summary"):
+                try:
+                    query_vector = EmbeddingService.embed_text(review_topic.strip())
+                except Exception:
+                    query_vector = None
+
+            review_repo = ReviewRepository(self.db)
+            matched = review_repo.get_reviews_for_product(
+                product_id=product.id,
+                focus=review_topic,
+                query_vector=query_vector,
+                limit=3,
+            )
+            reviews_data = [
+                {
+                    "rating": f"{r.rating}★",
+                    "title": r.title,
+                    "comment": r.comment,
+                    "author": r.author_name,
+                }
+                for r in matched
+            ]
+
+        data = {
             "id": product.id,
             "name": product.name,
             "slug": product.slug,
@@ -206,4 +237,9 @@ class ProductService:
             "stock_quantity": stock,
             "image_url": product.image_url,
         }
+        if review_topic:
+            data["review_topic"] = review_topic
+            data["customer_reviews"] = reviews_data
+
+        return data
 
